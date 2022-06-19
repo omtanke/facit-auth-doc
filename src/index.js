@@ -7,12 +7,15 @@ import App from './App/App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeContextProvider } from './contexts/themeContext';
 import './i18n';
+import { AuthContextProvider } from './contexts/authContext';
 
 const children = (
 	<Router>
 		<React.StrictMode>
 			<ThemeContextProvider>
-				<App />
+				<AuthContextProvider>
+					<App />
+				</AuthContextProvider>
 			</ThemeContextProvider>
 		</React.StrictMode>
 	</Router>

@@ -1,7 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import { useFormik } from 'formik';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../layout/Page/Page';
 import Card, { CardBody } from '../../../components/bootstrap/Card';
@@ -10,6 +11,7 @@ import Input from '../../../components/bootstrap/forms/Input';
 import Button from '../../../components/bootstrap/Button';
 import Logo from '../../../components/Logo';
 import useDarkMode from '../../../hooks/useDarkMode';
+import AuthContext from '../../../contexts/authContext';
 
 // eslint-disable-next-line react/prop-types
 const LoginHeader = ({ isNewUser }) => {
@@ -31,6 +33,7 @@ const LoginHeader = ({ isNewUser }) => {
 
 const Login = ({ isSignUp }) => {
 	const { darkModeStatus } = useDarkMode();
+	const { setUser } = useContext(AuthContext);
 
 	const [usernameInput, setUsernameInput] = useState(false);
 	const [isNewUser, setIsNewUser] = useState(isSignUp);
@@ -38,8 +41,36 @@ const Login = ({ isSignUp }) => {
 	const navigate = useNavigate();
 	const handleOnClick = useCallback(() => navigate('/'), [navigate]);
 
+	const formik = useFormik({
+		enableReinitialize: true,
+		initialValues: {
+			loginUsername: '',
+			loginPassword: '',
+		},
+		validate: (values) => {
+			const errors = {};
+
+			if (!values.loginUsername) {
+				errors.loginUsername = 'Required';
+			}
+
+			if (!values.loginPassword) {
+				errors.loginPassword = 'Required';
+			}
+
+			return errors;
+		},
+		onSubmit: (values) => {
+			if (values.loginUsername && values.loginPassword) {
+				setUser({ username: values.loginUsername });
+				handleOnClick();
+			}
+		},
+	});
+
 	return (
 		<PageWrapper
+			isProtected={false}
 			title={isNewUser ? 'Sign Up' : 'Login'}
 			className={classNames({ 'bg-warning': !isNewUser, 'bg-info': !!isNewUser })}>
 			<Page className='p-0'>
@@ -149,19 +180,39 @@ const Login = ({ isSignUp }) => {
 											<div className='col-12'>
 												{!usernameInput ? (
 													<FormGroup
-														id='login-username'
+														id='loginUsername'
 														isFloating
 														label='Your email or username'>
-														<Input autoComplete='username' />
+														<Input
+															autoComplete='username'
+															value={formik.values.loginUsername}
+															isTouched={formik.touched.loginUsername}
+															invalidFeedback={
+																formik.errors.loginUsername
+															}
+															validFeedback='Looks good!'
+															isValid={formik.isValid}
+															onChange={formik.handleChange}
+															onBlur={formik.handleBlur}
+														/>
 													</FormGroup>
 												) : (
 													<FormGroup
-														id='login-password'
+														id='loginPassword'
 														isFloating
 														label='Password'>
 														<Input
 															type='password'
 															autoComplete='password'
+															value={formik.values.loginPassword}
+															isTouched={formik.touched.loginPassword}
+															invalidFeedback={
+																formik.errors.loginPassword
+															}
+															validFeedback='Looks good!'
+															isValid={formik.isValid}
+															onChange={formik.handleChange}
+															onBlur={formik.handleBlur}
 														/>
 													</FormGroup>
 												)}
@@ -171,6 +222,7 @@ const Login = ({ isSignUp }) => {
 													<Button
 														color='warning'
 														className='w-100 py-3'
+														isDisable={!formik.values.loginUsername}
 														onClick={() => setUsernameInput(true)}>
 														Continue
 													</Button>
@@ -178,7 +230,7 @@ const Login = ({ isSignUp }) => {
 													<Button
 														color='warning'
 														className='w-100 py-3'
-														onClick={handleOnClick}>
+														onClick={formik.handleSubmit}>
 														Login
 													</Button>
 												)}
